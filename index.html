@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="refresh" content="0; url=./dashboard/dashboard.html">
     <title>Redirecting...</title>
+    <script>
+        // Forward all query parameters (like ?api=...) to the dashboard
+        window.location.replace("./dashboard/dashboard.html" + window.location.search);
+    </script>
 </head>
 <body>
     <p>If you are not redirected automatically, follow this <a href="./dashboard/dashboard.html">link to the dashboard</a>.</p>
