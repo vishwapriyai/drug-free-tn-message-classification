@@ -1,0 +1,15 @@
+fastapi==0.111.0
+uvicorn==0.30.1
+pydantic==2.7.1
+rapidfuzz==3.9.3
+sentence-transformers==3.0.1
+transformers==4.42.4
+torch>=2.2.0
+python-dotenv==1.0.1
+mysql-connector-python
+streamlit
+pandas
+pydeck
+openpyxl
+plotly
+matplotlib
