@@ -28,12 +28,13 @@ async def favicon():
 app.include_router(complaint.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 
-# Get the absolute path to the dashboard directory
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DASHBOARD_DIR = os.path.join(BASE_DIR, "Ai-tool-29426", "dashboard")
+# Get the absolute path to the dashboard directory dynamically
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DASHBOARD_DIR = os.path.join(BASE_DIR, "dashboard")
 
 # Serve static files from dashboard directory
 app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
+
 
 # Serve the main dashboard HTML file
 @app.get("/")
