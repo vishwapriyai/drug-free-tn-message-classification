@@ -655,9 +655,16 @@ table.main tbody td{padding:10px 16px;color:var(--text-2);vertical-align:middle;
 </div>
 
 <script>
-const API_BASE = "http://localhost:8080";
+// Resolve the API base dynamically (checks URL query param '?api=...', fallback to current origin if not on GitHub Pages, otherwise default local port)
+const urlParams = new URLSearchParams(window.location.search);
+const apiParam = urlParams.get('api');
+const API_BASE = apiParam 
+  ? apiParam.replace(/\/$/, "") 
+  : (window.location.hostname.includes("github.io") ? "http://localhost:8080" : window.location.origin);
 const API_URL  = `${API_BASE}/api/dashboard/data`;
 document.getElementById("apiUrlDisplay").textContent = API_URL;
+document.querySelector(".entry-link").href = `${API_BASE}/api/dashboard/submit`;
+
 
 Chart.defaults.color       = "#8a96a8";
 Chart.defaults.borderColor = "rgba(226,232,244,1)";
