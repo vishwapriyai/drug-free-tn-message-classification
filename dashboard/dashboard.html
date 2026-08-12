@@ -655,15 +655,21 @@ table.main tbody td{padding:10px 16px;color:var(--text-2);vertical-align:middle;
 </div>
 
 <script>
-// Resolve the API base dynamically (checks URL query param '?api=...', fallback to current origin if not on GitHub Pages, otherwise default local port)
+// Resolve the API base dynamically (checks URL query param, falls back to localStorage, then defaults)
 const urlParams = new URLSearchParams(window.location.search);
-const apiParam = urlParams.get('api');
+let apiParam = urlParams.get('api');
+if (apiParam) {
+    localStorage.setItem('drug_api_base', apiParam);
+} else {
+    apiParam = localStorage.getItem('drug_api_base');
+}
 const API_BASE = apiParam 
   ? apiParam.replace(/\/$/, "") 
   : (window.location.hostname.includes("github.io") ? "http://localhost:8080" : window.location.origin);
 const API_URL  = `${API_BASE}/api/dashboard/data`;
 document.getElementById("apiUrlDisplay").textContent = API_URL;
 document.querySelector(".entry-link").href = `${API_BASE}/api/dashboard/submit`;
+
 
 
 Chart.defaults.color       = "#8a96a8";
