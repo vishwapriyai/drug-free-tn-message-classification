@@ -1,5 +1,16 @@
 import uvicorn
 import gradio as gr
+import os
+
+# Satisfy Hugging Face ZeroGPU startup checker
+try:
+    import spaces
+    @spaces.GPU
+    def init_zero_gpu():
+        pass
+except ImportError:
+    pass
+
 from app.main import app
 
 # Create a clean Gradio interface for status display
