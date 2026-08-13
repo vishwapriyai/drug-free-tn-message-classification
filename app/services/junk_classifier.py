@@ -1,3 +1,15 @@
+import sys
+from types import ModuleType
+
+# Mock 'spaces' locally before import to avoid errors outside of Hugging Face
+try:
+    import spaces
+except ImportError:
+    mock_spaces = ModuleType("spaces")
+    mock_spaces.GPU = lambda fn=None: (fn if fn else lambda f: f)
+    sys.modules["spaces"] = mock_spaces
+    import spaces
+
 from string import punctuation
 import os
 from transformers import pipeline
@@ -5,15 +17,6 @@ from transformers import pipeline
 def _u(value: str) -> str:
     return value.encode("utf-8").decode("unicode_escape")
 
-# Safe spaces import for local vs Hugging Face environments
-try:
-    import spaces
-except ImportError:
-    class MockSpaces:
-        def GPU(self, fn=None):
-            if fn: return fn
-            return lambda f: f
-    spaces = MockSpaces()
 
 
 _classifier = None

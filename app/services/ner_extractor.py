@@ -1,15 +1,18 @@
-from transformers import pipeline
-import os
+import sys
+from types import ModuleType
 
-# Safe spaces import for local vs Hugging Face environments
+# Mock 'spaces' locally before import to avoid errors outside of Hugging Face
 try:
     import spaces
 except ImportError:
-    class MockSpaces:
-        def GPU(self, fn=None):
-            if fn: return fn
-            return lambda f: f
-    spaces = MockSpaces()
+    mock_spaces = ModuleType("spaces")
+    mock_spaces.GPU = lambda fn=None: (fn if fn else lambda f: f)
+    sys.modules["spaces"] = mock_spaces
+    import spaces
+
+from transformers import pipeline
+import os
+
 
 # Global cache to avoid reloading the model on every call
 _ner_pipeline = None

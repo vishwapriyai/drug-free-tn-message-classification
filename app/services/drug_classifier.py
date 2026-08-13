@@ -1,3 +1,15 @@
+import sys
+from types import ModuleType
+
+# Mock 'spaces' locally before import to avoid errors outside of Hugging Face
+try:
+    import spaces
+except ImportError:
+    mock_spaces = ModuleType("spaces")
+    mock_spaces.GPU = lambda fn=None: (fn if fn else lambda f: f)
+    sys.modules["spaces"] = mock_spaces
+    import spaces
+
 import re
 from difflib import SequenceMatcher
 
@@ -5,14 +17,6 @@ from sentence_transformers import util
 import os
 from app.services.embedding_model import get_model
 
-try:
-    import spaces
-except ImportError:
-    class MockSpaces:
-        def GPU(self, fn=None):
-            if fn: return fn
-            return lambda f: f
-    spaces = MockSpaces()
 
 
 try:
