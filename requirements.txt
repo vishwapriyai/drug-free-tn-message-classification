@@ -13,3 +13,5 @@ pydeck
 openpyxl
 plotly
 matplotlib
+spaces
+
