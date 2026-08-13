@@ -28,6 +28,13 @@ with gr.Blocks(title="Drug Free TN AI Status") as demo:
 # Mount your FastAPI application onto the Gradio container at '/status'
 app = gr.mount_gradio_app(app, demo, path="/status")
 
+# Explicitly trigger the GPU function during startup/import phase to pass HF checks
+try:
+    init_zero_gpu()
+except Exception:
+    pass
+
 if __name__ == "__main__":
     # Start the FastAPI server on port 7860
     uvicorn.run(app, host="0.0.0.0", port=7860)
+
