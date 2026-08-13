@@ -1,14 +1,31 @@
 from transformers import pipeline
+import os
 
-# Load NER model
-ner_pipeline = pipeline(
-    "ner",
-    model="dslim/bert-base-NER",
-    aggregation_strategy="simple"
-)
+# Safe spaces import for local vs Hugging Face environments
+try:
+    import spaces
+except ImportError:
+    class MockSpaces:
+        def GPU(self, fn=None):
+            if fn: return fn
+            return lambda f: f
+    spaces = MockSpaces()
 
+# Global cache to avoid reloading the model on every call
+_ner_pipeline = None
+
+@spaces.GPU
 def extract_entities(text: str):
-    entities = ner_pipeline(text)
+    global _ner_pipeline
+    if _ner_pipeline is None:
+        _ner_pipeline = pipeline(
+            "ner",
+            model="dslim/bert-base-NER",
+            aggregation_strategy="simple",
+            device=0 if os.getenv("SPACES_ZERO_GPU") else -1 # Use GPU if on Hugging Face ZeroGPU
+        )
+
+    entities = _ner_pipeline(text)
 
     result = {
         "persons": [],

@@ -2,8 +2,18 @@ import re
 from difflib import SequenceMatcher
 
 from sentence_transformers import util
+import os
+from app.services.embedding_model import get_model
 
-from app.services.embedding_model import model
+try:
+    import spaces
+except ImportError:
+    class MockSpaces:
+        def GPU(self, fn=None):
+            if fn: return fn
+            return lambda f: f
+    spaces = MockSpaces()
+
 
 try:
     from rapidfuzz import fuzz
@@ -131,10 +141,19 @@ DRUG_CONTEXT_TERMS = sorted(
     reverse=True,
 )
 
-drug_embeddings = {
-    k: model.encode(v, normalize_embeddings=True)
-    for k, v in DRUG_CLASSES.items()
-}
+_drug_embeddings = None
+
+@spaces.GPU
+def get_drug_embeddings():
+    global _drug_embeddings
+    if _drug_embeddings is None:
+        model = get_model()
+        _drug_embeddings = {
+            k: model.encode(v, normalize_embeddings=True)
+            for k, v in DRUG_CLASSES.items()
+        }
+    return _drug_embeddings
+
 
 
 def _is_ascii_wordish(value: str) -> bool:
@@ -204,6 +223,7 @@ def has_drug_context(text: str) -> bool:
     return any(_contains_term(text_lower, term) for term in DRUG_CONTEXT_TERMS)
 
 
+@spaces.GPU
 def detect_drug(text: str):
     text = text or ""
     text_lower = text.lower()
@@ -255,6 +275,8 @@ def detect_drug(text: str):
             "confidence": round(fuzzy_score, 3)
         }
 
+    model = get_model()
+    drug_embeddings = get_drug_embeddings()
     text_emb = model.encode(text, normalize_embeddings=True)
 
     best_match = "unknown"
@@ -273,3 +295,4 @@ def detect_drug(text: str):
         "label": best_match,
         "confidence": round(best_score, 3)
     }
+

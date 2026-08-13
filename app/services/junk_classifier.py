@@ -1,16 +1,29 @@
 from string import punctuation
-
+import os
 from transformers import pipeline
 
+# Safe spaces import for local vs Hugging Face environments
+try:
+    import spaces
+except ImportError:
+    class MockSpaces:
+        def GPU(self, fn=None):
+            if fn: return fn
+            return lambda f: f
+    spaces = MockSpaces()
 
-def _u(value: str) -> str:
-    return value.encode("utf-8").decode("unicode_escape")
+_classifier = None
 
+def get_classifier():
+    global _classifier
+    if _classifier is None:
+        _classifier = pipeline(
+            "zero-shot-classification",
+            model="facebook/bart-large-mnli",
+            device=0 if os.getenv("SPACES_ZERO_GPU") else -1
+        )
+    return _classifier
 
-classifier = pipeline(
-    "zero-shot-classification",
-    model="facebook/bart-large-mnli"
-)
 
 
 # classifier = pipeline(
@@ -80,6 +93,10 @@ def _is_generic_only(text: str) -> bool:
     return all(word in GENERIC_ONLY_TERMS for word in words)
 
 
+def _u(value: str) -> str:
+    return value.encode("utf-8").decode("unicode_escape")
+
+@spaces.GPU
 def is_junk(text: str, drug_label: str = "unknown", crime_label: str = "unknown") -> bool:
     text_lower = (text or "").lower().strip()
 
@@ -104,8 +121,9 @@ def is_junk(text: str, drug_label: str = "unknown", crime_label: str = "unknown"
     # ]
 
     
+    classifier_instance = get_classifier()
 
-    result = classifier(
+    result = classifier_instance(
         text,
         labels,
         multi_label=True
@@ -249,9 +267,11 @@ def is_junk(text: str, drug_label: str = "unknown", crime_label: str = "unknown"
     #     return True
 
     # return False
+@spaces.GPU
 def classify_complaint(text: str):
 
-    result = classifier(
+    classifier_instance = get_classifier()
+    result = classifier_instance(
         text,
         labels,
         multi_label=True

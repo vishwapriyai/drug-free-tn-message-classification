@@ -1,9 +1,19 @@
 import re
 
 from sentence_transformers import util
-
+import os
 from app.services.drug_classifier import has_drug_context
-from app.services.embedding_model import model
+from app.services.embedding_model import get_model
+
+try:
+    import spaces
+except ImportError:
+    class MockSpaces:
+        def GPU(self, fn=None):
+            if fn: return fn
+            return lambda f: f
+    spaces = MockSpaces()
+
 
 
 def _u(value: str) -> str:
@@ -63,10 +73,19 @@ CRIME_KEYWORDS = {
     ],
 }
 
-crime_embeddings = {
-    k: model.encode(v, normalize_embeddings=True)
-    for k, v in CRIME_CLASSES.items()
-}
+_crime_embeddings = None
+
+@spaces.GPU
+def get_crime_embeddings():
+    global _crime_embeddings
+    if _crime_embeddings is None:
+        model = get_model()
+        _crime_embeddings = {
+            k: model.encode(v, normalize_embeddings=True)
+            for k, v in CRIME_CLASSES.items()
+        }
+    return _crime_embeddings
+
 
 
 def _is_ascii_wordish(value: str) -> bool:
@@ -83,6 +102,7 @@ def _contains_term(text: str, term: str) -> bool:
     return term in text
 
 
+@spaces.GPU
 def detect_crime(text: str, has_detected_drug: bool = False):
     text = text or ""
     text_lower = text.lower()
@@ -98,6 +118,8 @@ def detect_crime(text: str, has_detected_drug: bool = False):
                 "confidence": 1.0
             }
 
+    model = get_model()
+    crime_embeddings = get_crime_embeddings()
     text_emb = model.encode(text, normalize_embeddings=True)
 
     best_match = "unknown"
@@ -116,3 +138,4 @@ def detect_crime(text: str, has_detected_drug: bool = False):
         "label": best_match,
         "confidence": round(best_score, 3)
     }
+

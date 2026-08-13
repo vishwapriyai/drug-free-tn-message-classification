@@ -1,12 +1,17 @@
+import os
 from sentence_transformers import SentenceTransformer
 
-# Load once (global)
-# model = SentenceTransformer("all-MiniLM-L6-v2")
+# Global cache
+_model = None
 
-model = SentenceTransformer(
-    "paraphrase-multilingual-MiniLM-L12-v2"
-)
+def get_model():
+    global _model
+    if _model is None:
+        # Load SentenceTransformer model lazily
+        _model = SentenceTransformer(
+            "paraphrase-multilingual-MiniLM-L12-v2"
+        )
+    return _model
 
 def get_embedding(text: str):
-    return model.encode(text)
-
+    return get_model().encode(text)
